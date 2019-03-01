@@ -43,7 +43,7 @@ def get_changes(owner_name, status, start_date=None, end_date=None):
 
 if __name__ == '__main__':
 	owner_name = input("enter username > ")
-	print ("enter time in yyyy-mm-dd format, eg: 2018-01-15")
+	print ("enter date in yyyy-mm-dd format, eg: 2018-01-15")
 	start_date = input("enter starting date > ")
 	end_date = input("enter ending date > ")
 	status = StatusType.MERGED
