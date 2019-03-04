@@ -97,7 +97,7 @@ def get_count(json_data, status_type):
 	return count_dict[status_type]
 
 if __name__ == '__main__':
-	owner_name = input("enter username > ")
+	owner_name = input("enter username (eg:pmiazga@wikimedia.org) > ")
 	start_date, end_date = None, None
 
 	timeframe = input("press 'y' to search within a timeframe > ")
