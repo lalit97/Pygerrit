@@ -24,7 +24,7 @@ def clean_date(date_string):
 	try:
 		datetime.strptime(date_string,'%Y-%m-%d')
 	except ValueError as e:
-		error_message = "please enter date in yyyy-mm-dd"
+		error_message = "please enter date in yyyy-mm-dd format"
 		logger(e, error_message)
 		sys.exit()
 
