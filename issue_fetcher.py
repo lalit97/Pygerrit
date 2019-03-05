@@ -38,11 +38,11 @@ def clean_input(owner_name, status, start_date=None, end_date=None):
 		'owner': owner_name
 	}
 
-	if start_date:
+	if start_date or start_date == '':
 		clean_date(start_date)
 		query_params['after'] = start_date
 
-	if end_date:
+	if end_date or end_date == '':
 		clean_date(end_date)
 		query_params['before'] = end_date
 
@@ -98,27 +98,27 @@ def get_count(json_data, status_type):
 
 if __name__ == '__main__':
 	owner_name = input("enter username (eg:pmiazga@wikimedia.org) > ")
-	start_date, end_date = None, None
+	status_type = StatusType.MERGED
+	url = 'http://gerrit.wikimedia.org/r/changes/?q=' 
 
 	timeframe = input("search within a timeframe (press y or N)> ")
 	if timeframe == 'y' or timeframe == 'Y':
 		print ("enter date in yyyy-mm-dd format, eg: 2018-01-15")
 		start_date = input("enter starting date > ")
 		end_date = input("enter ending date > ")
-		print ("fetching data from {} to {}...".format(start_date, end_date))
+		query_params = clean_input(owner_name, status_type, start_date, end_date)
+		print ("fetching data from {} to {} ...".format(start_date, end_date))
+
 	elif timeframe == 'n' or timeframe == 'N':
 		print ("fetching data from start of time to end of time...")
+		query_params = clean_input(owner_name, status_type)
+
 	else:
 		logging.error("Invalid Input enter y or N")
 		sys.exit()
 
-	status_type = StatusType.MERGED
-	url = 'http://gerrit.wikimedia.org/r/changes/?q=' 
-
-	query_params = clean_input(owner_name, status_type, start_date, end_date)
 	formatted_query = format_query_params(query_params)
 	json_data = fetech_gerrit_data(url, formatted_query)
 	count = get_count(json_data, status_type)
 
 	print ('Number of patches {} : {}'.format(status_type.lower(),count))
-
