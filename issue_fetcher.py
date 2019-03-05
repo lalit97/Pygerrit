@@ -100,11 +100,17 @@ if __name__ == '__main__':
 	owner_name = input("enter username (eg:pmiazga@wikimedia.org) > ")
 	start_date, end_date = None, None
 
-	timeframe = input("press 'y' to search within a timeframe > ")
+	timeframe = input("search within a timeframe (press y or N)> ")
 	if timeframe == 'y' or timeframe == 'Y':
 		print ("enter date in yyyy-mm-dd format, eg: 2018-01-15")
 		start_date = input("enter starting date > ")
 		end_date = input("enter ending date > ")
+		print ("fetching data from {} to {}...".format(start_date, end_date))
+	elif timeframe == 'n' or timeframe == 'N':
+		print ("fetching data from start of time to end of time...")
+	else:
+		logging.error("Invalid Input enter y or N")
+		sys.exit()
 
 	status_type = StatusType.MERGED
 	url = 'http://gerrit.wikimedia.org/r/changes/?q=' 
