@@ -179,7 +179,7 @@ if __name__ == '__main__':
     date_string = input("enter date in yyyy-mm format > ")
 
     base_url = 'https://phabricator.wikimedia.org/api/'
-    api_key = 'api-gdtb2ywe3k4q37iiwjegfh2rr2en'
+    api_key = input("enter your api key > ")
 
     user_phid = get_user_phid(username)
 
