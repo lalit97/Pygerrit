@@ -11,16 +11,12 @@ class StatusType:
 
 
 def logger(error_code, error_message):
-    '''
-    this handles error messages
-    '''
+    """ Print error message"""
     print(error_message)
 
 
 def clean_date(date_string):
-    '''
-    this cleans the date
-    '''
+    """ Clean date"""
     try:
         datetime.strptime(date_string, '%Y-%m-%d')
     except ValueError as e:
@@ -30,18 +26,14 @@ def clean_date(date_string):
 
 
 def clean_input(owner_name, status, start_date=None, end_date=None):
-    '''
-    This cleans the user input and creates query parameters
-    '''
+    """ Clean user input and create query parameters"""
     query_params = {
         'status': status,
         'owner': owner_name
     }
-
     if start_date or start_date == '':
         clean_date(start_date)
         query_params['after'] = start_date
-
     if end_date or end_date == '':
         clean_date(end_date)
         query_params['before'] = end_date
@@ -50,9 +42,7 @@ def clean_input(owner_name, status, start_date=None, end_date=None):
 
 
 def format_query_params(query_params):
-    '''
-    This returns a formatted query based on parameters
-    '''
+    """ Return a formatted query based on parameters"""
     formatted_query = ''
     for q_key, q_value in query_params.items():
         query_string = '+{}:{}'.format(q_key, q_value)
@@ -64,21 +54,16 @@ def format_query_params(query_params):
 
 
 def fetech_gerrit_data(url, formatted_query):
-    '''
-    this gets json response from given queries
-    '''
+    """ Gets json response from given queries"""
     url += formatted_query
-
     try:
         response = requests.get(url)
     except requests.exceptions.RequestException as e:
         error_message = "please enter a valid url"
         logger(e, error_message)
         sys.exit()
-
     response_text = response.text
     response_text = response_text.replace(")]}'", "", 1)
-
     try:
         json_data = json.loads(response_text)
     except json.decoder.JSONDecodeError as e:
@@ -90,9 +75,7 @@ def fetech_gerrit_data(url, formatted_query):
 
 
 def get_count(json_data, status_type):
-    '''
-    this returns count of given status type in json
-    '''
+    """Return count of status type in json data"""
     count_dict = Counter(data['status'] for data in json_data)
     return count_dict[status_type]
 
@@ -109,11 +92,9 @@ if __name__ == '__main__':
         end_date = input("enter ending date > ")
         query_params = clean_input(owner_name, status_type, start_date, end_date)
         print("fetching data from {} to {} ...".format(start_date, end_date))
-
     elif timeframe == 'n' or timeframe == 'N':
         print("fetching data from start of time to end of time...")
         query_params = clean_input(owner_name, status_type)
-
     else:
         print("Invalid Input enter y or N")
         sys.exit()
@@ -121,5 +102,4 @@ if __name__ == '__main__':
     formatted_query = format_query_params(query_params)
     json_data = fetech_gerrit_data(url, formatted_query)
     count = get_count(json_data, status_type)
-
     print('Number of patches {} : {}'.format(status_type.lower(), count))
