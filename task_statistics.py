@@ -1,8 +1,12 @@
 import requests
-import json
 import datetime
 from math import ceil
 import sys
+
+
+base_url = 'https://phabricator.wikimedia.org/api/'
+api_key = input("enter your api key > ")
+session = requests.Session()
 
 
 def logger(error_code, error_message):
@@ -33,7 +37,7 @@ def fetch_data(method_name, query_params):
     url = base_url + method_name
     query_params['api.token'] = api_key
     try:
-        response = requests.get(url, params=query_params)
+        response = session.get(url, params=query_params)
     except requests.exceptions.RequestException as e:
         error_message = "please enter a valid url"
         logger(e, error_message)
@@ -53,7 +57,6 @@ def get_user_phid(username):
         'names[0]': username,
     }
     json_data = fetch_data(method_name, query_params)
-
     result_dict = json_data['result']
 
     try:
@@ -77,7 +80,6 @@ def get_user_subscribed_task(username):
         'constraints[subscribers][0]': username,
     }
     json_data = fetch_data(method_name, query_params)
-
     result_dict = json_data['result']
 
     task_id_list = []
@@ -116,7 +118,6 @@ def get_subscription_date(task_id_list, user_phid):
             'ids[0]': task_id
         }
         json_data = fetch_data(method_name, query_params)
-
         result_dict = json_data['result']
 
         transaction_list = result_dict[str(task_id)]
@@ -139,10 +140,10 @@ def get_week_wise_subscription(input_date, subscription_date_list):
     '''
     input_date_month = input_date.month
     input_date_year = input_date.year
-
     result_dict = {
         '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
     }
+
     for date in subscription_date_list:
         date_object = datetime.datetime.fromtimestamp(int(date))
         day = date_object.day
@@ -170,7 +171,6 @@ def print_subscription_history(result_dict):
         week_align = week.center(6, ' ')
         subs_align = str(subscription).center(15, ' ')
         print(bar, week_align, bar, subs_align, bar, sep='')
-
     print('+------+---------------+')
 
 
@@ -178,17 +178,10 @@ if __name__ == '__main__':
     username = input("enter username > ")
     date_string = input("enter date in yyyy-mm format > ")
 
-    base_url = 'https://phabricator.wikimedia.org/api/'
-    api_key = input("enter your api key > ")
-
     user_phid = get_user_phid(username)
-
     input_date = clean_date(date_string)
-
     task_id_list = get_user_subscribed_task(username)
-
     subscription_date_list = get_subscription_date(task_id_list, user_phid)
-
     result_dict = get_week_wise_subscription(input_date, subscription_date_list)
 
     print_subscription_history(result_dict)
