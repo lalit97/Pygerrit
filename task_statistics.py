@@ -32,7 +32,6 @@ def fetch_data(method_name, query_params):
     """
     url = BASE_URL + method_name
     query_params['api.token'] = API_KEY
-
     try:
         response = session.get(url, params=query_params)
     except requests.exceptions.RequestException as e:
@@ -52,7 +51,6 @@ def get_user_phid(username):
     }
     json_data = fetch_data(method_name, query_params)
     result_dict = json_data['result']
-
     try:
         user_phid = result_dict[0]['phid']
     except TypeError:
@@ -75,7 +73,6 @@ def get_user_subs_task(username):
     }
     json_data = fetch_data(method_name, query_params)
     result_dict = json_data['result']
-
     task_id_list = []
     for data_dict in result_dict['data']:
         if data_dict['type'] == 'TASK':
@@ -90,7 +87,6 @@ def get_user_subs_task(username):
         }
         json_data = fetch_data(method_name, query_params)
         result_dict = json_data['result']
-
         data_list = result_dict['data']
         for data_dict in data_list:
             if data_dict['type'] == 'TASK':
@@ -113,7 +109,6 @@ def get_subs_date(user_phid, task_id_list):
         }
         json_data = fetch_data(method_name, query_params)
         result_dict = json_data['result']
-
         transaction_list = result_dict[str(task_id)]
         for transaction in transaction_list:
             if transaction['transactionType'] == 'core:subscribers':
@@ -159,7 +154,6 @@ def print_subs_history(subs_count_dict):
         week_align = week.center(6, ' ')
         subs_align = str(subs).center(15, ' ')
         print(bar, week_align, bar, subs_align, bar, sep='')
-
     print('+------+---------------+')
 
 
@@ -167,7 +161,6 @@ if __name__ == '__main__':
     username = input('enter username > ')
     date_string = input('enter date in yyyy-mm format > ')
     session = requests.Session()
-
     user_phid = get_user_phid(username)
     input_date = clean_date(date_string)
     task_id_list = get_user_subs_task(username)
