@@ -5,21 +5,16 @@ from math import ceil
 
 
 BASE_URL = 'https://phabricator.wikimedia.org/api/'
-API_KEY = input('enter your api key > ')
-SESSION = requests.Session()
+API_KEY = 'YOUR API-KEY HERE'
 
 
 def logger(error_code, error_message):
-    '''
-    this handles error messages
-    '''
+    """ Print error message"""
     print(error_message)
 
 
 def clean_date(date_string):
-    '''
-    this cleans the date
-    '''
+    """ Return cleaned date"""
     try:
         date_object = datetime.datetime.strptime(date_string, '%Y-%m')
     except ValueError as e:
@@ -31,14 +26,15 @@ def clean_date(date_string):
 
 
 def fetch_data(method_name, query_params):
-    '''
-    this returns json response from given parameters
-    '''
+    """ 
+    Return json response for 
+    given method name and parameters
+    """
     url = BASE_URL + method_name
     query_params['api.token'] = API_KEY
 
     try:
-        response = SESSION.get(url, params=query_params)
+        response = session.get(url, params=query_params)
     except requests.exceptions.RequestException as e:
         error_message = 'please enter a valid url'
         logger(e, error_message)
@@ -49,9 +45,7 @@ def fetch_data(method_name, query_params):
 
 
 def get_user_phid(username):
-    '''
-    this returns given user's PhID
-    '''
+    """ Return user's PhID"""
     method_name = 'user.mediawikiquery'
     query_params = {
         'names[0]': username,
@@ -71,18 +65,18 @@ def get_user_phid(username):
 
 
 def get_user_subs_task(username):
-    '''
-    this returns a list of task id's
-    on which user is subscribed to
-    '''
+    """
+    Return list of task id's
+    on user is subscribed to
+    """
     method_name = 'maniphest.search'
     query_params = {
         'constraints[subscribers][0]': username,
     }
     json_data = fetch_data(method_name, query_params)
     result_dict = json_data['result']
-    task_id_list = []
 
+    task_id_list = []
     for data_dict in result_dict['data']:
         if data_dict['type'] == 'TASK':
             task_id = data_dict['id']
@@ -97,7 +91,8 @@ def get_user_subs_task(username):
         json_data = fetch_data(method_name, query_params)
         result_dict = json_data['result']
 
-        for data_dict in result_dict['data']:
+        data_list = result_dict['data']
+        for data_dict in data_list:
             if data_dict['type'] == 'TASK':
                 task_id = data_dict['id']
                 task_id_list.append(task_id)
@@ -106,26 +101,25 @@ def get_user_subs_task(username):
 
 
 def get_subs_date(user_phid, task_id_list):
-    '''
-    this returns a list of dates when
-    given user is subscribed to a given task id
-    '''
+    """ 
+    Return a list of dates when
+    user is subscribed to a task 
+    """
     method_name = 'maniphest.gettasktransactions'
     subs_date_list = []
-
     for task_id in task_id_list:
         query_params = {
             'ids[0]': task_id
         }
         json_data = fetch_data(method_name, query_params)
         result_dict = json_data['result']
-        transaction_list = result_dict[str(task_id)]
 
+        transaction_list = result_dict[str(task_id)]
         for transaction in transaction_list:
             if transaction['transactionType'] == 'core:subscribers':
-                condition_1 = user_phid not in transaction['oldValue']
-                condition_2 = user_phid in transaction['newValue']
-                if condition_1 and condition_2:
+                cond_1 = user_phid not in transaction['oldValue']
+                cond_2 = user_phid in transaction['newValue']
+                if cond_1 and cond_2:
                     subs_date = transaction['dateCreated']
                     subs_date_list.append(subs_date)
                     break
@@ -134,16 +128,15 @@ def get_subs_date(user_phid, task_id_list):
 
 
 def get_week_wise_subs(input_date, subs_date_list):
-    '''
-    this returns a dictionary containing
-    week wise subscription count of user
-    '''
+    """
+    Return dictionary containing
+    subscription count of user per week 
+    """
     input_date_month = input_date.month
     input_date_year = input_date.year
     subs_count_dict = {
         '1': 0, '2': 0, '3': 0, '4': 0, '5': 0,
     }
-
     for date in subs_date_list:
         date_object = datetime.datetime.fromtimestamp(int(date))
         day = date_object.day
@@ -157,24 +150,23 @@ def get_week_wise_subs(input_date, subs_date_list):
 
 
 def print_subs_history(subs_count_dict):
-    '''
-    this prints users subscribed tasks week wise
-    '''
+    """ Print users subscribed task per week"""
     print('+------+---------------+')
     print('| Week |  Subscription |')
     print('+------+---------------+')
     bar = '|'
-
     for week, subs in subs_count_dict.items():
         week_align = week.center(6, ' ')
         subs_align = str(subs).center(15, ' ')
         print(bar, week_align, bar, subs_align, bar, sep='')
+
     print('+------+---------------+')
 
 
 if __name__ == '__main__':
     username = input('enter username > ')
     date_string = input('enter date in yyyy-mm format > ')
+    session = requests.Session()
 
     user_phid = get_user_phid(username)
     input_date = clean_date(date_string)
