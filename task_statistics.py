@@ -4,48 +4,14 @@ import grequests
 import requests
 from math import ceil
 
+
 BASE_URL = 'https://phabricator.wikimedia.org/api/'
 API_KEY = 'YOUR API-KEY HERE'
 
 
-def get_url(task_id_list):
-    """
-    Return json response for
-    given method name and parameters
-    """
-    method_name = 'maniphest.gettasktransactions'
-    url_list = []
-    for task_id in task_id_list:
-        query_params = {
-            'ids[0]': task_id
-        }
-        url = BASE_URL + method_name
-        url += '?api.token='+API_KEY
-        url += '&ids[0]=' + str(task_id)
-        url_list.append(url)
-
-    return url_list
-
-def get_json_response(url_list):
-    response_object = (grequests.get(url) for url in url_list)
-    reponse_list = grequests.map(response_object)
-    return reponse_list
-
 def logger(error_code, error_message):
     """ Print error message"""
     print(error_message)
-
-
-def clean_date(date_string):
-    """ Return cleaned date"""
-    try:
-        date_object = datetime.datetime.strptime(date_string, '%Y-%m')
-    except ValueError as e:
-        error_message = 'please enter date in yyyy-mm format'
-        logger(e, error_message)
-        sys.exit()
-
-    return date_object
 
 
 def fetch_data(method_name, query_params):
@@ -56,13 +22,13 @@ def fetch_data(method_name, query_params):
     url = BASE_URL + method_name
     query_params['api.token'] = API_KEY
     try:
-        response = session.get(url, params=query_params)
+        response = requests.get(url, params=query_params)
     except requests.exceptions.RequestException as e:
         error_message = 'please enter a valid url'
         logger(e, error_message)
         sys.exit()
-
     json_data = response.json()
+
     return json_data
 
 
@@ -85,6 +51,18 @@ def get_user_phid(username):
     return user_phid
 
 
+def get_clean_date(date_string):
+    """ Return cleaned date"""
+    try:
+        date_object = datetime.datetime.strptime(date_string, '%Y-%m')
+    except ValueError as e:
+        error_message = 'please enter date in yyyy-mm format'
+        logger(e, error_message)
+        sys.exit()
+
+    return date_object
+
+
 def get_user_subs_task(username):
     """
     Return list of task id's
@@ -102,6 +80,7 @@ def get_user_subs_task(username):
             task_id = data_dict['id']
             task_id_list.append(task_id)
 
+    # Handling pagination in API
     while result_dict['cursor']['after']:
         next_page = result_dict['cursor']['after']
         query_params = {
@@ -117,6 +96,32 @@ def get_user_subs_task(username):
                 task_id_list.append(task_id)
 
     return task_id_list
+
+
+def get_url(task_id_list):
+    """
+    Return json response for
+    given method name and parameters
+    """
+    method_name = 'maniphest.gettasktransactions'
+    url_list = []
+    for task_id in task_id_list:
+        query_params = {
+            'ids[0]': task_id
+        }
+        url = BASE_URL + method_name
+        url += '?api.token='+API_KEY
+        url += '&ids[0]=' + str(task_id)
+        url_list.append(url)
+
+    return url_list
+
+
+def get_json_response(url_list):
+    """ Return json response for given urls"""
+    response_object = (grequests.get(url) for url in url_list)
+    reponse_list = grequests.map(response_object)
+    return reponse_list
 
 
 def get_subs_date(json_response_list, task_id_list):
@@ -142,7 +147,7 @@ def get_subs_date(json_response_list, task_id_list):
     return subs_date_list
 
 
-def get_week_wise_subs(input_date, subs_date_list):
+def get_subs_per_week(input_date, subs_date_list):
     """
     Return dictionary containing
     subscription count of user per week
@@ -180,12 +185,11 @@ def print_subs_history(subs_count_dict):
 if __name__ == '__main__':
     username = input('enter username > ')
     date_string = input('enter date in yyyy-mm format > ')
-    session = requests.Session()
     user_phid = get_user_phid(username)
-    input_date = clean_date(date_string)
+    input_date = get_clean_date(date_string)
     task_id_list = get_user_subs_task(username)
     url_list = get_url(task_id_list)
     json_response_list = get_json_response(url_list)
     subs_date_list = get_subs_date(json_response_list, task_id_list)
-    subs_count_dict = get_week_wise_subs(input_date, subs_date_list)
+    subs_count_dict = get_subs_per_week(input_date, subs_date_list)
     print_subs_history(subs_count_dict)
