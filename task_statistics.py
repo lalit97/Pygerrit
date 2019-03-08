@@ -4,8 +4,8 @@ import grequests
 import requests
 from math import ceil
 
-BASE_URL = 'YOUR API-KEY HERE'
-API_KEY = 'api-gdtb2ywe3k4q37iiwjegfh2rr2en'
+BASE_URL = 'https://phabricator.wikimedia.org/api/'
+API_KEY = 'YOUR API-KEY HERE'
 
 
 def get_url(task_id_list):
