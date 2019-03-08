@@ -1,5 +1,15 @@
-#Pygerrit
+# Pygerrit: Developer activity tracker 
 
-a tool for use by event organizers to track developer activity
+## 1. issue_fetcher.py
+  Enter username and timeframe to get number of patches merged on Gerrit.
 
-Enter username and timeframe to get number of patched merged
+___ 
+
+## 2. task_statistics.py
+  Enter username and date to get number of tasks user is subscribed to in Phabricator 
+  
+  ### Requirements
+  Install grequests with pip  
+  ```
+  $ pip3 install grequests
+  ```
