@@ -1,12 +1,35 @@
 import sys
 import datetime
+import grequests
 import requests
 from math import ceil
 
+BASE_URL = 'YOUR API-KEY HERE'
+API_KEY = 'api-gdtb2ywe3k4q37iiwjegfh2rr2en'
 
-BASE_URL = 'https://phabricator.wikimedia.org/api/'
-API_KEY = 'YOUR API-KEY HERE'
 
+def get_url(task_id_list):
+    """
+    Return json response for
+    given method name and parameters
+    """
+    method_name = 'maniphest.gettasktransactions'
+    url_list = []
+    for task_id in task_id_list:
+        query_params = {
+            'ids[0]': task_id
+        }
+        url = BASE_URL + method_name
+        url += '?api.token='+API_KEY
+        url += '&ids[0]=' + str(task_id)
+        url_list.append(url)
+
+    return url_list
+
+def get_json_response(url_list):
+    response_object = (grequests.get(url) for url in url_list)
+    reponse_list = grequests.map(response_object)
+    return reponse_list
 
 def logger(error_code, error_message):
     """ Print error message"""
@@ -26,8 +49,8 @@ def clean_date(date_string):
 
 
 def fetch_data(method_name, query_params):
-    """ 
-    Return json response for 
+    """
+    Return json response for
     given method name and parameters
     """
     url = BASE_URL + method_name
@@ -96,20 +119,17 @@ def get_user_subs_task(username):
     return task_id_list
 
 
-def get_subs_date(user_phid, task_id_list):
-    """ 
-    Return a list of dates when
-    user is subscribed to a task 
+def get_subs_date(json_response_list, task_id_list):
     """
-    method_name = 'maniphest.gettasktransactions'
+    Return a list of dates when
+    user is subscribed to a task
+    """
+    length_list = len(task_id_list)
     subs_date_list = []
-    for task_id in task_id_list:
-        query_params = {
-            'ids[0]': task_id
-        }
-        json_data = fetch_data(method_name, query_params)
+    for response in range(length_list):
+        json_data = json_response_list[response].json()
         result_dict = json_data['result']
-        transaction_list = result_dict[str(task_id)]
+        transaction_list = result_dict[str(task_id_list[response])]
         for transaction in transaction_list:
             if transaction['transactionType'] == 'core:subscribers':
                 cond_1 = user_phid not in transaction['oldValue']
@@ -125,7 +145,7 @@ def get_subs_date(user_phid, task_id_list):
 def get_week_wise_subs(input_date, subs_date_list):
     """
     Return dictionary containing
-    subscription count of user per week 
+    subscription count of user per week
     """
     input_date_month = input_date.month
     input_date_year = input_date.year
@@ -164,6 +184,8 @@ if __name__ == '__main__':
     user_phid = get_user_phid(username)
     input_date = clean_date(date_string)
     task_id_list = get_user_subs_task(username)
-    subs_date_list = get_subs_date(user_phid, task_id_list)
+    url_list = get_url(task_id_list)
+    json_response_list = get_json_response(url_list)
+    subs_date_list = get_subs_date(json_response_list, task_id_list)
     subs_count_dict = get_week_wise_subs(input_date, subs_date_list)
     print_subs_history(subs_count_dict)
