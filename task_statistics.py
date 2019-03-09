@@ -11,7 +11,13 @@ API_KEY = 'YOUR API-KEY HERE'
 
 def logger(error_code, error_message):
     """ Print error message"""
-    print(error_message)
+    print('Error : {}'.format(error_message))
+
+
+def g_exception_handler(request, exception):
+    """ Handle exceptions for grequests"""
+    print('Error : Request Failed')
+    sys.exit()
 
 
 def fetch_data(method_name, query_params):
@@ -27,7 +33,13 @@ def fetch_data(method_name, query_params):
         error_message = 'please enter a valid url'
         logger(e, error_message)
         sys.exit()
-    json_data = response.json()
+
+    try:
+        json_data = response.json()
+    except json.decoder.JSONDecodeError as e:
+        error_message = "please enter a valid url"
+        logger(e, error_message)
+        sys.exit()
 
     return json_data
 
@@ -74,8 +86,9 @@ def get_user_subs_task(username):
     }
     json_data = fetch_data(method_name, query_params)
     result_dict = json_data['result']
+    data_list = result_dict['data']
     task_id_list = []
-    for data_dict in result_dict['data']:
+    for data_dict in data_list:
         if data_dict['type'] == 'TASK':
             task_id = data_dict['id']
             task_id_list.append(task_id)
@@ -119,8 +132,8 @@ def get_url(task_id_list):
 
 def get_json_response(url_list):
     """ Return json response for given urls"""
-    response_object = (grequests.get(url) for url in url_list)
-    reponse_list = grequests.map(response_object)
+    resp = (grequests.get(url) for url in url_list)
+    reponse_list = grequests.map(resp, exception_handler=g_exception_handler)
     return reponse_list
 
 
@@ -129,12 +142,17 @@ def get_subs_date(json_response_list, task_id_list):
     Return a list of dates when
     user is subscribed to a task
     """
-    length_list = len(task_id_list)
+    list_length = len(task_id_list)
     subs_date_list = []
-    for response in range(length_list):
-        json_data = json_response_list[response].json()
+    for res_index in range(list_length):
+        try:
+            json_data = json_response_list[res_index].json()
+        except json.decoder.JSONDecodeError as e:
+            error_message = "unable to decode json"
+            logger(e, error_message)
+            sys.exit()
         result_dict = json_data['result']
-        transaction_list = result_dict[str(task_id_list[response])]
+        transaction_list = result_dict[str(task_id_list[res_index])]
         for transaction in transaction_list:
             if transaction['transactionType'] == 'core:subscribers':
                 cond_1 = user_phid not in transaction['oldValue']
